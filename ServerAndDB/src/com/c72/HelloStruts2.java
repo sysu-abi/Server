@@ -34,6 +34,12 @@ public class HelloStruts2 extends ActionSupport implements ModelDriven<String>{
 	      }
 	      return SUCCESS;
 	}
+
+	@Override
+	public String getModel() {
+		// TODO Auto-generated method stub
+		return name;
+	}
 	
 	public String getName() {
 		return name;
@@ -42,11 +48,6 @@ public class HelloStruts2 extends ActionSupport implements ModelDriven<String>{
 		this.name = name;
 	}
 
-	@Override
-	public String getModel() {
-		// TODO Auto-generated method stub
-		return name;
-	}
 	
 	public File getMyFile() {
 		return myFile;

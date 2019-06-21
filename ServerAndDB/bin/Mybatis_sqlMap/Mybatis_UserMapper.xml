@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper    
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"    
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间，对sql进行一个分类管理 -->
+<!-- 注意：namespace在mapper代理时，具有重要且特殊的作用 -->
+<mapper namespace="Mybatis_sqlMap.Mybatis_UserMapper">
+	<!-- 
+ 2             使用id进行查询
+ 3         查询，使用select来表示一个查询的statement，相当于statement.executeQuery
+ 4         id:表示该statement唯一标识
+ 5         parameterType:输入参数类型
+ 6         resultType:输出参数类型，使用的是User类，则会将查询出来的记录封装到该类中
+ 7         #{id}:使用#{}接收输入的参数，其中的"id"属性名任意，可以为uid，也可以为别的。
+ 8       -->
+ 		<select id="findUserByName" parameterType="java.lang.String" resultType="com.c72.User">
+ 			SELECT * FROM user WHERE name= #{name} 
+ 		</select>
+</mapper>

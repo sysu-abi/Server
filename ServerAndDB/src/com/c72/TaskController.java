@@ -63,6 +63,7 @@ public class TaskController{
 		   //密码匹配
 		   if(user.getPassword().equals(password)) {
 			   modelMap.put("status", "success");
+			   modelMap.put("user", user);
 		   }else {
 			   modelMap.put("status", "fail");
 			   modelMap.put("log","Password mismatch.");
@@ -350,6 +351,7 @@ public class TaskController{
 	   Task task=taskDAOImpl.getTask(Integer.valueOf(tid));
 	   List<Message> messages=taskDAOImpl.listMessages(task.getTid());
 	   taskDAOImpl.createMessage(task.getTid(), Integer.valueOf(uid), messages==null?1:messages.size()+1, detail);
+	   modelMap.put("detail", detail); 
 	   return modelMap;
    }
    

@@ -1,5 +1,6 @@
 package com.c72;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
@@ -9,20 +10,27 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.hibernate.Criteria;
+
+import Mybatis_sqlMap.Mybatis_UserMapper;
+
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.hibernate.HibernateException;
 import org.hibernate.query.Query;
 import org.hibernate.Session; 
 import org.hibernate.Transaction;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.criterion.Restrictions;
-import javax.persistence.criteria.CriteriaQuery;
 
 public class TaskDAOImpl implements TaskDAO {
 	   private DataSource dataSource;
 	   private JdbcTemplate jdbcTemplateObject; 
-	   private static SessionFactory factory; 
+	   //hibernate的工厂
+	   private SessionFactory factory; 
+	   //mybatis的工厂
+	   private SqlSessionFactory sqlSessionFactory;
 	@Override
 	@Autowired
 	public void setDataSource(DataSource ds) {
@@ -35,6 +43,12 @@ public class TaskDAOImpl implements TaskDAO {
 	    	System.err.println("Failed to create sessionFactory object." + ex);
 	        throw new ExceptionInInitializerError(ex); 
 	    }
+		try {
+			sqlSessionFactory=new SqlSessionFactoryBuilder().build(Resources.getResourceAsStream("sqlMapConfig.xml"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -75,9 +89,21 @@ public class TaskDAOImpl implements TaskDAO {
 	@Override
 	public User getUserbyName(String name) {
 		// TODO Auto-generated method stub
+		//JDBCTemplate实现
+		//--------------
 		//String SQL = "select * from User where name = ?";
+		/*try {
+	    user = jdbcTemplateObject.queryForObject(SQL, 
+	                        new Object[]{name}, new UserMapper());
+	}catch (EmptyResultDataAccessException e) {
+		e.printStackTrace();
+		user=null;
+		// TODO: handle exception
+	}*/
+		//Hibernate实现
+		//-----------
 		User user=null;
-		Session session = factory.openSession();
+		/*Session session = factory.openSession();
 	      Transaction tx = null;
 	      try{
 	         tx = session.beginTransaction();
@@ -94,15 +120,20 @@ public class TaskDAOImpl implements TaskDAO {
 	      }finally {
 	         session.close(); 
 	      }
-		/*try {
-		    user = jdbcTemplateObject.queryForObject(SQL, 
-		                        new Object[]{name}, new UserMapper());
-		}catch (EmptyResultDataAccessException e) {
-			e.printStackTrace();
-			user=null;
-			// TODO: handle exception
-		}*/
-	      return user;
+	      return user;*/
+	    //mybatis低级实现
+	    //------------
+		/*SqlSession sqlSession= sqlSessionFactory.openSession();
+	    user=sqlSession.selectOne("test.findUserByName",name);//只有一行代码。。对比太过明显
+	    sqlSession.close();
+	    return user;*/
+	    //mybatis高级实现
+		//直接对接口进行操作，符合OOP习惯
+		SqlSession sqlSession= sqlSessionFactory.openSession();
+		Mybatis_UserMapper userMapper=sqlSession.getMapper(Mybatis_UserMapper.class);
+		user=userMapper.findUserByName(name);
+	    sqlSession.close();
+		return user;
 	}
 
 	@Override
