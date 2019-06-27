@@ -1,7 +1,6 @@
 package com.c72;
 
 import java.sql.Timestamp;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,8 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
-
 @Controller
 public class TaskController{ 
 
@@ -23,7 +20,7 @@ public class TaskController{
    private TaskDAOImpl taskDAOImpl = 
    (TaskDAOImpl)context.getBean("TaskDAOImpl");   
    
-   //闁烩偓鍔嶉崺娑㈡儎缁嬪灝褰�
+   //User Relate
    @RequestMapping(value = "/userRegist", method = RequestMethod.POST)
    @ResponseBody
    public Map<String,Object> userRegist(@RequestParam("name") String name,
@@ -32,7 +29,7 @@ public class TaskController{
 		   								@RequestParam("password") String password
 		   ) {
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
-	   //婵☆偓鎷烽柡灞诲劜濡插憡绋夊鍡樞︾�规瓕灏欑划锛勶拷娑櫭﹢顏堝触鐏炶姤鍊抽柣鈧妽閸╋拷
+	 //Check if the same name user already exists
 	   User user=taskDAOImpl.getUserbyName(name);
 	   if(user!=null) {
 		   modelMap.put("status", "fail");
@@ -51,20 +48,15 @@ public class TaskController{
 		   ) {
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
 	   User user=taskDAOImpl.getUserbyName(name);
-	   //婵☆偓鎷烽柡灞诲劤閺併倝骞嬪畡鎵憼闁革讣鎷�
+	 //Check user presence
 	   if(user==null) {
 		   modelMap.put("status", "fail");
 		   modelMap.put("log","User not exist.");
 	   }else {
-		   //閻庨潧妫涢悥婊堝礌瑜版帒甯�
+		 //Password Matching
 		   if(user.getPassword().equals(password)) {
-			   taskDAOImpl.deleteSession(user.getUid());
-			   taskDAOImpl.createSession(user.getUid());
-			   Session session = taskDAOImpl.getSessionbyUid(user.getUid());
-			   int cookie = taskDAOImpl.Encode(session.getCookie());	   
 			   modelMap.put("status", "success");
 			   modelMap.put("user", user);
-			   modelMap.put("cookie", cookie);
 		   }else {
 			   modelMap.put("status", "fail");
 			   modelMap.put("log","Password mismatch.");
@@ -79,12 +71,12 @@ public class TaskController{
 		   ) {
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
 	   User user=taskDAOImpl.getUserbyName(name);
-	   //婵☆偓鎷烽柡灞诲劤閺併倝骞嬪畡鎵憼闁革讣鎷�
+	 //Check user presence
 	   if(user==null) {
 		   modelMap.put("status", "fail");
 		   modelMap.put("log","User not exist.");
 	   }else {
-		   //閻庨潧妫涢悥婊堝礌瑜版帒甯�
+		   //Password Matching
 		   modelMap.put("status", "success");
 		   modelMap.put("user", user);
 	   }
@@ -97,28 +89,23 @@ public class TaskController{
 										@RequestParam("phone") String phone,
 										@RequestParam("email") String email,
 										@RequestParam("password") String password,
-										@RequestParam("money") String money,
-										@RequestParam("cookie") String cookie
+										@RequestParam("money") String money
 										
 		   ) {
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
 	   User user=taskDAOImpl.getUserbyName(name);
-	   //婵☆偓鎷烽柡灞诲劤閺併倝骞嬪畡鎵憼闁革讣鎷�
+	 //Check user presence
 	   if(user==null) {
 		   modelMap.put("status", "fail");
 		   modelMap.put("log","User not exist.");
-	   }
-	   else if(!taskDAOImpl.CheckCookie(user.getUid(), cookie)){
-		   modelMap.put("status", "fail");
-		   modelMap.put("log","User no match.");
-	   }else {		   	
+	   }else {
 		   taskDAOImpl.updateUser(user.getUid(), name, phone, email, password, Integer.valueOf(money), user.getCredit());
 		   modelMap.put("status", "success");
 	   }
 	   return modelMap;
    }
    
-   //闁哄被鍎撮妤佺鐠囨彃顫ら柣鈺冾焾閸欙拷
+   //Query Task 
    @RequestMapping(value = "/listTasks", method = RequestMethod.POST)
    @ResponseBody
    public Map<String,Object> listTasks(@RequestParam("extra") String extra
@@ -129,7 +116,7 @@ public class TaskController{
 	   return modelMap;
    }
    
-   //mode=ASC/DESC:闁告鎷�/闂傚嫬绉寸花锟�
+   //mode=ASC/DESC:Ascending/descending order
    @RequestMapping(value = "/listTasksbyDDL", method = RequestMethod.POST)
    @ResponseBody
    public Map<String,Object> listTasksbyDDL(@RequestParam("mode") String mode,
@@ -163,11 +150,10 @@ public class TaskController{
 	   return modelMap;
    }
    
-   //闁告瑦鍨电粩鐑藉Υ娴ｇ懓澶嶉柛娆愮墧閹广垽宕濋敍鍕ゲ闁稿骏鎷�
+   //Publish and receive tasks
    @RequestMapping(value = "/createTask", method = RequestMethod.POST)
    @ResponseBody
-   public Map<String,Object> createTask(@RequestParam("cookie") String cookie,
-		   								@RequestParam("uid") String uid,
+   public Map<String,Object> createTask(@RequestParam("uid") String uid,
 		   								@RequestParam("title") String title,
 		   								@RequestParam("detail") String detail,
 		   								@RequestParam("money") String money,
@@ -176,20 +162,12 @@ public class TaskController{
 		   								@RequestParam("end_time") String end_time
 		   ) { 
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
-	   //婵☆偓鎷烽柡灞诲劙缂嶆垶锛愰敓锟�
+	   //Check the balance
 	   User user=taskDAOImpl.getUserbyUid(Integer.valueOf(uid));
-	   if(uid == null) {
-		   modelMap.put("state", "fail");
-		   modelMap.put("log", "User not exist.");
-	   }	   
-	   else if(!taskDAOImpl.CheckCookie(Integer.valueOf(uid), cookie)) {
+	   if(user.getMoney()<Integer.valueOf(money)*Integer.valueOf(total_num)) {
 		   modelMap.put("state", "fail");
 		   modelMap.put("log", "No enough money.");
-	   }
-	   else if(user.getMoney()<Integer.valueOf(money)*Integer.valueOf(total_num)) {
-		   modelMap.put("state", "fail");
-		   modelMap.put("log", "No enough money.");
-	   }else {//闁告帗绋戠紓鎾寸鐠囨彃顫ゆ鐐存构缁楁牠骞嶉敐澶嬬彑闂佹枻鎷�
+	   }else {//Create tasks and deduct money
 		   taskDAOImpl.creatTask(Integer.valueOf(uid), title, detail, Integer.valueOf(money), type, Integer.valueOf(total_num), Timestamp.valueOf(end_time), "unfinished");
 		   taskDAOImpl.updateUser(user.getUid(), user.getName(), user.getPhone(), user.getEmail(), user.getPassword(), user.getMoney()-Integer.valueOf(money)*Integer.valueOf(total_num), user.getCredit());
 		   modelMap.put("state", "success"); 
@@ -214,18 +192,13 @@ public class TaskController{
 		   								@RequestParam("title") String title,
 		   								@RequestParam("detail") String detail,
 		   								@RequestParam("type") String type,
-		   								@RequestParam("end_time") String end_time,
-		   								@RequestParam("cookie") String cookie
-		   								
+		   								@RequestParam("end_time") String end_time
 		   ) { 
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
 	   Task task=taskDAOImpl.getTask(Integer.valueOf(tid));
 	   if(task==null) {
 		   modelMap.put("state", "fail");
 		   modelMap.put("log", "Task not exist.");
-	   }else if(!taskDAOImpl.CheckCookie(Integer.valueOf(uid), cookie)) {
-		   modelMap.put("state", "fail");
-		   modelMap.put("log", "No enough money.");
 	   }else {
 		   taskDAOImpl.updateTask(Integer.valueOf(tid), title, detail, task.getMoney(), type, task.getTotal_num(), task.getCurrent_num(), task.getStart_time(), Timestamp.valueOf(end_time), task.getState());
 		   modelMap.put("state", "success");
@@ -236,18 +209,14 @@ public class TaskController{
    @RequestMapping(value = "/joinTask", method = RequestMethod.POST)
    @ResponseBody
    public Map<String,Object> joinTask(@RequestParam("tid") String tid,
-		   							  @RequestParam("uid") String uid,
-		   							  @RequestParam("cookie") String cookie
+		   							  @RequestParam("uid") String uid
 		   ) { 
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
-	   //婵☆偓鎷烽柡灞诲劙閹广垽宕濋敍鍕﹂柟顒婃嫹
+	   //Check task status
 	   Task task=taskDAOImpl.getTask(Integer.valueOf(tid));
 	   if(task==null) {
 		   modelMap.put("state", "fail");
 		   modelMap.put("log", "Task not exist.");
-	   }else if(!taskDAOImpl.CheckCookie(Integer.valueOf(uid), cookie)) {
-		   modelMap.put("state", "fail");
-		   modelMap.put("log", "No enough money.");
 	   }else {
 		   if(task.getState().equals("finished")) {
 			   modelMap.put("state", "fail");
@@ -276,18 +245,14 @@ public class TaskController{
    @RequestMapping(value = "/disjoinTask", method = RequestMethod.POST)
    @ResponseBody
    public Map<String,Object> disjoinTask(@RequestParam("tid") String tid,
-		   								 @RequestParam("uid") String uid,
-		   								 @RequestParam("cookie") String cookie
+		   								 @RequestParam("uid") String uid
 		   ) { 
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
-	   //婵☆偓鎷烽柡灞诲劙閹广垽宕濋敍鍕﹂柟顒婃嫹
+	   //Check task status
 	   Task task=taskDAOImpl.getTask(Integer.valueOf(tid));
 	   if(task==null) {
 		   modelMap.put("state", "fail");
 		   modelMap.put("log", "Task not exist.");
-	   }else if(!taskDAOImpl.CheckCookie(Integer.valueOf(uid), cookie)){
-		   modelMap.put("status", "fail");
-		   modelMap.put("log","User no match.");
 	   }else {
 		   if(task.getState().equals("finished")) {
 			   modelMap.put("state", "fail");
@@ -304,18 +269,14 @@ public class TaskController{
    @RequestMapping(value = "/endTask", method = RequestMethod.POST)
    @ResponseBody
    public Map<String,Object> endTask(@RequestParam("tid") String tid,
-		   							 @RequestParam("uid") String uid,
-		   							@RequestParam("cookie") String cookie
+		   							 @RequestParam("uid") String uid
 		   ) { 
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
-	   //婵☆偓鎷烽柡灞诲劙閹广垽宕濋敍鍕﹂柟顒婃嫹
+	   //Check task status
 	   Task task=taskDAOImpl.getTask(Integer.valueOf(tid));
 	   if(task==null) {
 		   modelMap.put("state", "fail");
 		   modelMap.put("log", "Task not exist.");
-	   }else if(!taskDAOImpl.CheckCookie(Integer.valueOf(uid), cookie)){
-		   modelMap.put("status", "fail");
-		   modelMap.put("log","User no match.");
 	   }else {
 		   if(task.getUid()!=Integer.valueOf(uid)) {
 			   modelMap.put("state", "fail");
@@ -341,7 +302,7 @@ public class TaskController{
    public Map<String,Object> getJoinUsers(@RequestParam("tid") String tid
 		   ) { 
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
-	   //婵☆偓鎷烽柡灞诲劙閹广垽宕濋敍鍕﹂柟顒婃嫹
+	   //Check task status
 	   Task task=taskDAOImpl.getTask(Integer.valueOf(tid));
 	   if(task==null) {
 		   modelMap.put("state", "fail");
@@ -361,42 +322,30 @@ public class TaskController{
    
    @RequestMapping(value = "/getJoinTasks", method = RequestMethod.POST)
    @ResponseBody
-   public Map<String,Object> getJoinTasks(@RequestParam("uid") String uid,
-		   								  @RequestParam("cookie") String cookie
+   public Map<String,Object> getJoinTasks(@RequestParam("uid") String uid
 		   ) { 
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
-	   if(!taskDAOImpl.CheckCookie(Integer.valueOf(uid), cookie)){
-		   modelMap.put("status", "fail");
-		   modelMap.put("log","User no match.");
+	   //Check task status
+	   List<UserJoins> userJoins=taskDAOImpl.listUserJoinsbyUid(Integer.valueOf(uid));
+	   List<Task> tasks=new ArrayList<Task>();
+	   for(int i=0;i<userJoins.size();i++) {
+		   UserJoins join=userJoins.get(i);
+		   tasks.add(taskDAOImpl.getTask(join.getTid()));
 	   }
-	   else {
-		   //婵☆偓鎷烽柡灞诲劙閹广垽宕濋敍鍕﹂柟顒婃嫹
-		   List<UserJoins> userJoins=taskDAOImpl.listUserJoinsbyUid(Integer.valueOf(uid));
-		   List<Task> tasks=new ArrayList<Task>();
-		   for(int i=0;i<userJoins.size();i++) {
-			   UserJoins join=userJoins.get(i);
-			   tasks.add(taskDAOImpl.getTask(join.getTid()));
-		   }
-		   modelMap.put("taskList", tasks);
-	   }
+	   modelMap.put("taskList", tasks);
 	   return modelMap;
    }
    
    @RequestMapping(value = "/getpublishTasks", method = RequestMethod.POST)
    @ResponseBody
-   public Map<String,Object> getpublishTasks(@RequestParam("uid") String uid,
-		   									 @RequestParam("cookie") String cookie
+   public Map<String,Object> getpublishTasks(@RequestParam("uid") String uid
 		   ) { 
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
-	   //婵☆偓鎷烽柡灞诲劙閹广垽宕濋敍鍕﹂柟顒婃嫹
+	   //Check task status
 	   User user = taskDAOImpl.getUserbyUid(Integer.valueOf(uid));
 	   if(user == null) {
 		   modelMap.put("state", "fail");
 		   modelMap.put("log", "User not exist.");
-	   }
-	   else if(!taskDAOImpl.CheckCookie(Integer.valueOf(uid), cookie)){
-		   modelMap.put("status", "fail");
-		   modelMap.put("log","User no match.");
 	   }
 	   else {
 		   List<Task> taskList = taskDAOImpl.getpublishTask(Integer.valueOf(uid));
@@ -410,18 +359,13 @@ public class TaskController{
    @ResponseBody
    public Map<String,Object> createMessage( @RequestParam("tid") String tid,
 		   									@RequestParam("uid") String uid,
-		   									@RequestParam("detail") String detail,
-		   									@RequestParam("cookie") String cookie
+		   									@RequestParam("detail") String detail
 		   ) { 
 	   Map<String, Object> modelMap=new HashMap<String, Object>();
 	   Task task=taskDAOImpl.getTask(Integer.valueOf(tid));
 	   if(task == null){
 		   modelMap.put("status", "fail");
 		   modelMap.put("log","This Task do not exist.");
-	   }
-	   else if(!taskDAOImpl.CheckCookie(Integer.valueOf(uid), cookie)){
-		   modelMap.put("status", "fail");
-		   modelMap.put("log","User no match.");
 	   }
 	   else {
 		   List<Message> messages=taskDAOImpl.listMessages(task.getTid());
