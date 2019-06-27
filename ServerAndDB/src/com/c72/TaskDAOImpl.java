@@ -1,6 +1,5 @@
 package com.c72;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
@@ -11,44 +10,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import Mybatis_sqlMap.Mybatis_UserMapper;
-
-import org.apache.ibatis.io.Resources;
-import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.SqlSessionFactoryBuilder;
-import org.hibernate.HibernateException;
-import org.hibernate.query.Query;
-import org.hibernate.Session; 
-import org.hibernate.Transaction;
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
-
 public class TaskDAOImpl implements TaskDAO {
 	   private DataSource dataSource;
 	   private JdbcTemplate jdbcTemplateObject; 
-	   //hibernate的工厂
-	   private SessionFactory factory; 
-	   //mybatis的工厂
-	   private SqlSessionFactory sqlSessionFactory;
 	@Override
 	@Autowired
 	public void setDataSource(DataSource ds) {
 		// TODO Auto-generated method stub
 		dataSource=ds;
 		this.jdbcTemplateObject = new JdbcTemplate(dataSource);
-		try{
-			factory = new Configuration().configure().buildSessionFactory();
-	    }catch (Throwable ex) { 
-	    	System.err.println("Failed to create sessionFactory object." + ex);
-	        throw new ExceptionInInitializerError(ex); 
-	    }
-		try {
-			sqlSessionFactory=new SqlSessionFactoryBuilder().build(Resources.getResourceAsStream("sqlMapConfig.xml"));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	@Override
@@ -61,79 +31,33 @@ public class TaskDAOImpl implements TaskDAO {
 	@Override
 	public User getUserbyUid(Integer uid) {
 		// TODO Auto-generated method stub
-		//String SQL = "select * from User where uid = ?";
-		User user=null;
-		Session session = factory.openSession();
-	      Transaction tx = null;
-	      try{
-	         tx = session.beginTransaction();
-	         user = session.get(User.class, uid); 
-	         tx.commit();
-	      }catch (HibernateException e) {
-	         if (tx!=null) tx.rollback();
-	         e.printStackTrace(); 
-	      }finally {
-	         session.close(); 
-	      }
-		/*try {
+		String SQL = "select * from User where uid = ?";
+		User user;
+		try {
 		    user = jdbcTemplateObject.queryForObject(SQL, 
 		                        new Object[]{uid}, new UserMapper());
 		} catch (EmptyResultDataAccessException e) {
 			e.printStackTrace();
 			user=null;
 			// TODO: handle exception
-		}*/
+		}
 	      return user;
 	}
 	
 	@Override
 	public User getUserbyName(String name) {
 		// TODO Auto-generated method stub
-		//JDBCTemplate实现
-		//--------------
-		//String SQL = "select * from User where name = ?";
-		/*try {
-	    user = jdbcTemplateObject.queryForObject(SQL, 
-	                        new Object[]{name}, new UserMapper());
-	}catch (EmptyResultDataAccessException e) {
-		e.printStackTrace();
-		user=null;
-		// TODO: handle exception
-	}*/
-		//Hibernate实现
-		//-----------
-		User user=null;
-		/*Session session = factory.openSession();
-	      Transaction tx = null;
-	      try{
-	         tx = session.beginTransaction();
-	         //charVar类型/String类型要用单引号括起，否则会出错
-	         Query<User> q=session.createQuery("from User user where user.name='"+name+"'");
-	         List<User> users=q.list();
-	         if(users.size()>0) {
-	        	 user=users.get(0);
-	         }
-	         tx.commit();
-	      }catch (HibernateException e) {
-	         if (tx!=null) tx.rollback();
-	         e.printStackTrace(); 
-	      }finally {
-	         session.close(); 
-	      }
-	      return user;*/
-	    //mybatis低级实现
-	    //------------
-		/*SqlSession sqlSession= sqlSessionFactory.openSession();
-	    user=sqlSession.selectOne("test.findUserByName",name);//只有一行代码。。对比太过明显
-	    sqlSession.close();
-	    return user;*/
-	    //mybatis高级实现
-		//直接对接口进行操作，符合OOP习惯
-		SqlSession sqlSession= sqlSessionFactory.openSession();
-		Mybatis_UserMapper userMapper=sqlSession.getMapper(Mybatis_UserMapper.class);
-		user=userMapper.findUserByName(name);
-	    sqlSession.close();
-		return user;
+		String SQL = "select * from User where name = ?";
+		User user;
+		try {
+		    user = jdbcTemplateObject.queryForObject(SQL, 
+		                        new Object[]{name}, new UserMapper());
+		}catch (EmptyResultDataAccessException e) {
+			e.printStackTrace();
+			user=null;
+			// TODO: handle exception
+		}
+	      return user;
 	}
 
 	@Override
@@ -176,6 +100,21 @@ public class TaskDAOImpl implements TaskDAO {
 	}
 
 	@Override
+	public List<Task> getpublishTask(Integer uid) {
+		// TODO Auto-generated method stub
+		String SQL = "select * from Task where uid = ?";
+		List<Task> taskList;
+		try {
+		    taskList = jdbcTemplateObject.query(SQL, new Object[]{uid}, new TaskMapper());
+		} catch (EmptyResultDataAccessException e) {
+			e.printStackTrace();
+			taskList=null;
+			// TODO: handle exception
+		}
+	      return taskList;
+	}
+	
+	@Override
 	public void updateTask(int tid, String title, String detail, int money, String type, int total_num, int current_num,
 			Timestamp start_time, Timestamp end_time, String state) {
 		// TODO Auto-generated method stub
@@ -213,7 +152,7 @@ public class TaskDAOImpl implements TaskDAO {
 	@Override
 	public List<Task> listTasks(String extra) {
 		// TODO Auto-generated method stub
-		String SQL="select * from Task ";
+		String SQL="select * from Task";
 		if(extra.equals("true")) {
 			SQL+="where state = 'extra' ";
 		}
@@ -344,6 +283,149 @@ public class TaskDAOImpl implements TaskDAO {
 		String SQL="select * from UserJoins where uid = ?";
 		List<UserJoins> userJoins=jdbcTemplateObject.query(SQL,new Object[] {uid},new UserJoinsMapper());
 		return userJoins;
+	}
+	
+	//Survey
+	@Override
+	public void createSurvey(int tid) {
+		// TODO Auto-generated method stub
+		String SQL = "insert into Survey (tid) values (?)";     
+	    jdbcTemplateObject.update( SQL, tid);
+	}
+	
+	@Override
+	public List<Survey> getSurveybyTid(int tid) {
+		// TODO Auto-generated method stub
+		String SQL="select * from Survey where tid = ?";    
+		List<Survey> surveyList;
+		try {
+			surveyList=jdbcTemplateObject.query(SQL,new Object[] {tid},new SurveyMapper());
+		} catch (EmptyResultDataAccessException e) {
+			e.printStackTrace();
+			surveyList=null;
+			// TODO: handle exception
+		}	
+	    return surveyList;
+	}
+	
+	@Override
+	public Survey getSurveybySid(int sid) {
+		// TODO Auto-generated method stub
+		String SQL="select * from Survey where sid = ?";    
+		Survey survey;
+		try {
+			survey=jdbcTemplateObject.queryForObject(SQL,new Object[] {sid},new SurveyMapper());
+		} catch (EmptyResultDataAccessException e) {
+			e.printStackTrace();
+			survey=null;
+			// TODO: handle exception
+		}
+		
+	    return survey;
+	}
+	
+	@Override
+	public void deleteSurvey(int sid) {
+		// TODO Auto-generated method stub
+		String SQL="delete from Survey where sid = ?";
+		jdbcTemplateObject.update(SQL, sid);
+	}
+
+	//Question
+	@Override
+	public void createQuestion(int sid,int qid,String qtype,String qtitle,String answer_a,String answer_b,String answer_c,String answer_d) {
+		// TODO Auto-generated method stub
+		String SQL = "insert into Question (sid, qid, qtype, qtitle, answer_a, answer_b, answer_c, answer_d) values (?,?,?,?,?,?,?,?)";     
+	    jdbcTemplateObject.update( SQL, sid, qid, qtype, qtitle, answer_a, answer_b, answer_c, answer_d);
+	}
+	
+	@Override
+	public List<Question> getQuestionbySid(int sid) {
+		// TODO Auto-generated method stub
+		String SQL="select * from Question where sid = ?";    
+		List<Question> questionList;
+		try {
+			questionList=jdbcTemplateObject.query(SQL,new Object[] {sid},new QuestionMapper());
+		} catch (EmptyResultDataAccessException e) {
+			e.printStackTrace();
+			questionList=null;
+			// TODO: handle exception
+		}	
+	    return questionList;
+	}
+	
+	@Override
+	public Question getQuestionbyId(int sid,int qid) {
+		// TODO Auto-generated method stub
+		String SQL="select * from Question where sid = ? and qid = ?";    
+		Question question;
+		try {
+			question=jdbcTemplateObject.queryForObject(SQL,new Object[] {sid,qid},new QuestionMapper());
+		} catch (EmptyResultDataAccessException e) {
+			e.printStackTrace();
+			question=null;
+			// TODO: handle exception
+		}
+	    return question;
+	}
+	
+	@Override
+	public void deleteQuestion(int sid) {
+		// TODO Auto-generated method stub
+		String SQL="delete from Question where sid = ?";
+		jdbcTemplateObject.update(SQL, sid);
+	}
+	
+	//AnswerStatistics
+	@Override
+	public void createAnswerStatistics(int sid,int qid) {
+		// TODO Auto-generated method stub
+		String SQL = "insert into AnswerStatistics (sid, qid, count_a, count_b, count_c, count_d) values (?,?,?,?,?,?)";     
+	    jdbcTemplateObject.update( SQL, sid, qid, 0, 0, 0, 0);
+	}
+	
+	@Override
+	public List<AnswerStatistics> getStatisticsbySid(int sid) {
+		// TODO Auto-generated method stub
+		String SQL = "select * from AnswerStatistics where sid = ?";        
+		List<AnswerStatistics> statistics;
+		try {
+			statistics=jdbcTemplateObject.query(SQL,new Object[] {sid},new AnswerStatisticsMapper());
+		} catch (EmptyResultDataAccessException e) {
+			e.printStackTrace();
+			statistics=null;
+			// TODO: handle exception
+		}	
+	    return statistics;
+	}
+	
+	@Override
+	public AnswerStatistics getAnswerStatisticsbyID(int sid,int qid) {
+		// TODO Auto-generated method stub
+		String SQL="select * from AnswerStatistics where sid = ? and qid = ?";    
+		AnswerStatistics statistics;
+		try {
+			statistics=jdbcTemplateObject.queryForObject(SQL,new Object[] {sid,qid},new AnswerStatisticsMapper());
+		} catch (EmptyResultDataAccessException e) {
+			e.printStackTrace();
+			statistics=null;
+			// TODO: handle exception
+		}
+	    return statistics;
+	}
+	
+	@Override
+	public void updateAnswerStatistics(int sid,int qid,int count_a,int count_b,int count_c,int count_d){
+		// TODO Auto-generated method stub
+		String SQL = "update AnswerStatistics set count_a = ?, count_b = ?, count_c = ?, count_d = ? where sid = ? and qid = ?";
+	    jdbcTemplateObject.update(SQL, count_a, count_b, count_c, count_d, sid, qid);
+	}
+	
+	@Override
+	public void deleteAnswerStatistics(int sid) {
+		// TODO Auto-generated method stub
+		String SQL="delete from AnswerStatistics where sid = ?";
+		jdbcTemplateObject.update(SQL, sid);
 	}
 
 }
