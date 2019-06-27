@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
+
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -427,5 +428,50 @@ public class TaskDAOImpl implements TaskDAO {
 		String SQL="delete from AnswerStatistics where sid = ?";
 		jdbcTemplateObject.update(SQL, sid);
 	}
+	//Session
+	@Override
+	public void createSession(int uid){
+		// TODO Auto-generated method stub
+		String SQL = "insert into Session (uid) values (?)";     
+	    jdbcTemplateObject.update( SQL, uid);
+	}
+	@Override
+	public Session getSessionbyCookie(int cookie){
+		// TODO Auto-generated method stub
+		String SQL="select * from Session where cookie = ?";
+		Session session = jdbcTemplateObject.queryForObject(SQL,new Object[] {cookie},new SessionMapper());
+		return session;
+	}
+	@Override
+	public Session getSessionbyUid(int uid){
+		// TODO Auto-generated method stub
+		String SQL="select * from Session where uid = ?";
+		Session session = jdbcTemplateObject.queryForObject(SQL,new Object[] {uid},new SessionMapper());
+		return session;
+	}
+	@Override
+	public void deleteSession(int uid){
+		// TODO Auto-generated method stub
+		String SQL = "delete from Session where uid = ?";     
+	    jdbcTemplateObject.update( SQL, uid);
+	}
+	
+	public  Boolean CheckCookie(int uid,String cookie) {
+		int c = Decode(Integer.valueOf(cookie));
+		Session session = getSessionbyCookie(c);
+		if (session==null) return false;
+		if(uid == session.getUid()) return true;
+		return false;
+	}
+	
+	public int Encode(int a) {
+		int result = (a*744-2782)*6+131226;
+		return result;
+	}
+	public int Decode(int a) {
+		int result = ((a - 131226)/6+2782)/744;
+		return result;
+	}
+
 
 }

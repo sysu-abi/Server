@@ -212,4 +212,31 @@ public interface TaskDAO {
 	    * This is method to be used to delete questions
 	    */
 		public void deleteAnswerStatistics(int sid);
+		
+		//Session
+		//-------
+	   /** 
+	    * This is the method to be used to Create Session.
+	    * It will response a uid.
+	    */
+		public void createSession(int uid);
+		/** 
+	    * This is the method to be used to search session according to cookie
+	    * @return
+	    */
+		public Session getSessionbyCookie(int cookie);
+		/** 
+	    * This is the method to be used to search session according to uid
+	    * @return
+	    */
+		public Session getSessionbyUid(int uid);
+		/** 
+	    * This is the method to be used to delete session according to cookie
+	    * @return
+	    */
+		public void deleteSession(int uid);
+		
+		public  Boolean CheckCookie(int uid,String cookie);
+		public int Encode(int a);
+		public int Decode(int a);
 }
